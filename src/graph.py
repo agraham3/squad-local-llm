@@ -13,6 +13,12 @@ from src.agents.planner import planner_node
 from src.agents.coder import coder_node
 from src.agents.fast_utility import fast_utility_node
 from src.config import get_routing_agent, ROUTING_RULES
+from src.squad_runtime import (
+    format_plan_for_display,
+    markdown_table,
+    summarize_task,
+    truncate_text,
+)
 
 
 class AgentState(TypedDict):
@@ -161,26 +167,74 @@ def _save_execution_log(task: str, final_state: dict) -> str:
         Path to saved log file
     """
     log_dir = _ensure_log_dir()
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    
-    # Create session log
-    session_log = {
-        "timestamp": datetime.now().isoformat(),
-        "task": task,
-        "plan": final_state.get("plan", ""),
-        "status": final_state.get("status", "unknown"),
-        "next_agent": final_state.get("next_agent", ""),
-        "implementation": final_state.get("implementation", ""),
-        "utility_output": final_state.get("utility_output", ""),
-        "files_written": final_state.get("files_written", []),
-        "file_write_error": final_state.get("file_write_error", ""),
-    }
-    
-    # Save as JSON
-    log_file = log_dir / f"session_{timestamp}.json"
-    with open(log_file, "w") as f:
-        json.dump(session_log, f, indent=2)
-    
+    now = datetime.now()
+    timestamp = now.strftime("%Y-%m-%dT%H-%M-%S")
+    title = summarize_task(task)
+    status = final_state.get("status", "unknown")
+    next_agent = final_state.get("next_agent", "none")
+    files_written = final_state.get("files_written", []) or []
+    file_write_error = final_state.get("file_write_error", "")
+    implementation = final_state.get("implementation", "")
+    utility_output = final_state.get("utility_output", "")
+    result = implementation or utility_output or "(no agent output captured)"
+
+    lines = [
+        f"# Session Log - {title}",
+        "",
+        markdown_table(
+            [
+                ("Timestamp", now.isoformat()),
+                ("Status", status),
+                ("Agent routed", next_agent),
+                ("Files written", str(len(files_written))),
+            ]
+        ),
+        "",
+        "## Task",
+        "",
+        task.strip(),
+        "",
+        "## Plan",
+        "",
+        format_plan_for_display(final_state.get("plan", "")) or "(no plan captured)",
+        "",
+        "## Files Written",
+        "",
+    ]
+
+    if files_written:
+        lines.extend(f"- `{path}`" for path in files_written)
+    else:
+        lines.append("- None")
+
+    if file_write_error:
+        lines.extend(["", "## File Write Error", "", file_write_error])
+
+    lines.extend(
+        [
+            "",
+            "## Result",
+            "",
+            truncate_text(result),
+            "",
+            "---",
+            "",
+            "## Appendix: Raw Agent Outputs",
+            "",
+        ]
+    )
+
+    if implementation:
+        lines.extend(["### Coder Raw Output", "", truncate_text(implementation), ""])
+    if utility_output:
+        lines.extend(["### Fast Utility Raw Output", "", truncate_text(utility_output), ""])
+    if not implementation and not utility_output:
+        lines.append("(no raw output captured)")
+
+    log_file = log_dir / f"{timestamp}-{title}.md"
+    with open(log_file, "w", encoding="utf-8") as f:
+        f.write("\n".join(lines).rstrip() + "\n")
+
     return str(log_file)
 
 
@@ -201,14 +255,30 @@ def _save_agent_log(agent_name: str, input_data: dict, output: str) -> str:
     
     # Create agent log
     log_file = log_dir / f"agent_{agent_name}_{timestamp}.md"
-    with open(log_file, "w") as f:
-        f.write(f"# Agent: {agent_name}\n\n")
-        f.write(f"**Timestamp:** {datetime.now().isoformat()}\n\n")
-        f.write(f"## Input Task\n\n{input_data.get('user_task', 'N/A')}\n\n")
-        f.write(f"## Agent Output\n\n```\n{output}\n```\n\n")
-        f.write(f"## Input State\n\n```json\n")
-        f.write(json.dumps({k: v for k, v in input_data.items() if k != 'messages'}, indent=2))
-        f.write(f"\n```\n")
+    task = input_data.get("user_task", "N/A")
+    plan = input_data.get("plan", "")
+    files_written = input_data.get("files_written", []) or []
+    with open(log_file, "w", encoding="utf-8") as f:
+        f.write(f"# Agent Log - {agent_name}\n\n")
+        f.write(
+            markdown_table(
+                [
+                    ("Timestamp", datetime.now().isoformat()),
+                    ("Agent", agent_name),
+                    ("Status entering agent", input_data.get("status", "unknown")),
+                    ("Next agent", input_data.get("next_agent", "")),
+                ]
+            )
+        )
+        f.write(f"\n\n## Task\n\n{task}\n\n")
+        if plan:
+            f.write(f"## Plan Context\n\n{format_plan_for_display(plan)}\n\n")
+        if files_written:
+            f.write("## Files Written So Far\n\n")
+            for path in files_written:
+                f.write(f"- `{path}`\n")
+            f.write("\n")
+        f.write(f"## Raw Output\n\n{truncate_text(output)}\n")
     
     return str(log_file)
 

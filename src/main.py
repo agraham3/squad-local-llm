@@ -110,7 +110,14 @@ def _get_latest_log():
     log_dir = Path(".squad/log")
     if not log_dir.exists():
         return None
-    
+
+    markdown_files = [
+        path for path in log_dir.glob("*.md")
+        if not path.name.startswith("agent_")
+    ]
+    if markdown_files:
+        return str(max(markdown_files, key=lambda path: path.stat().st_mtime))
+
     json_files = sorted(log_dir.glob("session_*.json"), reverse=True)
     if json_files:
         return str(json_files[0])
@@ -120,7 +127,26 @@ def _get_latest_log():
 def _print_log_summary(log_file: str):
     """Print a summary of the log file."""
     try:
-        with open(log_file, 'r') as f:
+        log_path = Path(log_file)
+        if log_path.suffix.lower() == ".md":
+            content = log_path.read_text(encoding="utf-8")
+            _format_section("EXECUTION LOG DETAILS")
+            preview_lines = []
+            for line in content.splitlines():
+                if line == "## Result":
+                    preview_lines.append(line)
+                    break
+                if line.startswith("# ") or line.startswith("| **") or line.startswith("## "):
+                    preview_lines.append(line)
+                if len(preview_lines) >= 12:
+                    break
+
+            for line in preview_lines:
+                print(line)
+            print(f"\nFull log: {log_file}")
+            return
+
+        with open(log_file, 'r', encoding="utf-8") as f:
             log_data = json.load(f)
         
         _format_section("EXECUTION LOG DETAILS")

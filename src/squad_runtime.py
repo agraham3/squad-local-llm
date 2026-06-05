@@ -135,6 +135,29 @@ def format_plan_for_display(plan: str) -> str:
     return "\n".join(lines) if lines else plan
 
 
+def summarize_task(task: str, max_words: int = 8) -> str:
+    """Create a short, filesystem-friendly task title."""
+    words = re.findall(r"[A-Za-z0-9]+", task.lower())
+    summary = "-".join(words[:max_words]) if words else "task"
+    return summary[:80]
+
+
+def truncate_text(text: str, limit: int = 12000) -> str:
+    """Keep markdown logs readable when a local model returns a very large blob."""
+    if len(text) <= limit:
+        return text
+    return f"{text[:limit]}\n\n...[truncated {len(text) - limit} characters]"
+
+
+def markdown_table(rows: list[tuple[str, str]]) -> str:
+    """Render a two-column markdown table."""
+    lines = ["| Field | Value |", "|-------|-------|"]
+    for key, value in rows:
+        safe_value = str(value).replace("\n", "<br>")
+        lines.append(f"| **{key}** | {safe_value} |")
+    return "\n".join(lines)
+
+
 def extract_file_writes(response: str) -> list[FileWrite]:
     """
     Extract proposed file writes from common model formats.
