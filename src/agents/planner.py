@@ -8,6 +8,15 @@ from langchain_ollama import OllamaLLM
 from src.config import get_agent_config
 
 
+def _save_planner_log(input_state: dict, output: str) -> None:
+    """Save planner agent execution log."""
+    try:
+        from src.graph import _save_agent_log
+        _save_agent_log("planner", input_state, output)
+    except Exception:
+        pass  # Silently fail if logging is not available
+
+
 def create_planner_node():
     """Create and configure the Planner agent."""
     agent_config = get_agent_config("planner")
@@ -38,6 +47,8 @@ def planner_node(state: dict) -> dict:
     if not task:
         return state
     
+    print("\n[*] PLANNER - Analyzing and decomposing task...")
+    
     planning_prompt = f"""You are an expert task planner and architect.
     
 Your job is to decompose the following task into clear, structured steps.
@@ -61,6 +72,11 @@ Provide output as a JSON object with this structure:
 Think step-by-step, then output ONLY the JSON object."""
 
     response = llm.invoke(planning_prompt)
+    
+    print("[✓] PLANNER - Task analysis complete")
+    
+    # Save log
+    _save_planner_log(state, response)
     
     state["plan"] = response
     state["status"] = "planning_complete"

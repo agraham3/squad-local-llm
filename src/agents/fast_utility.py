@@ -8,6 +8,15 @@ from langchain_ollama import OllamaLLM
 from src.config import get_agent_config
 
 
+def _save_utility_log(input_state: dict, output: str) -> None:
+    """Save fast utility agent execution log."""
+    try:
+        from src.graph import _save_agent_log
+        _save_agent_log("fast_utility", input_state, output)
+    except Exception:
+        pass  # Silently fail if logging is not available
+
+
 def create_fast_utility_node():
     """Create and configure the Fast Utility agent."""
     agent_config = get_agent_config("fast_utility")
@@ -40,6 +49,8 @@ def fast_utility_node(state: dict) -> dict:
     if not task:
         return state
     
+    print("\n[*] FAST_UTILITY - Generating quick boilerplate...")
+    
     utility_prompt = f"""You are a quick, efficient code utility specialist.
 
 Task: {task}
@@ -56,6 +67,11 @@ Your goal is to:
 Output the solution directly and concisely."""
 
     response = llm.invoke(utility_prompt)
+    
+    print("[✓] FAST_UTILITY - Boilerplate generated")
+    
+    # Save log
+    _save_utility_log(state, response)
     
     state["utility_output"] = response
     state["status"] = "utility_complete"

@@ -8,6 +8,15 @@ from langchain_ollama import OllamaLLM
 from src.config import get_agent_config
 
 
+def _save_coder_log(input_state: dict, output: str) -> None:
+    """Save coder agent execution log."""
+    try:
+        from src.graph import _save_agent_log
+        _save_agent_log("coder", input_state, output)
+    except Exception:
+        pass  # Silently fail if logging is not available
+
+
 def create_coder_node():
     """Create and configure the Coder agent."""
     agent_config = get_agent_config("coder")
@@ -41,6 +50,8 @@ def coder_node(state: dict) -> dict:
     if not task:
         return state
     
+    print("\n[*] CODER - Generating production-ready code...")
+    
     # Build prompt with context
     coding_prompt = f"""You are an expert software engineer specializing in writing clean, production-ready code.
 
@@ -65,6 +76,11 @@ Output:
 Focus on correctness and clarity over brevity."""
 
     response = llm.invoke(coding_prompt)
+    
+    print("[✓] CODER - Implementation complete")
+    
+    # Save log
+    _save_coder_log(state, response)
     
     state["implementation"] = response
     state["status"] = "implementation_complete"
