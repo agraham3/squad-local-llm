@@ -1,0 +1,27 @@
+{
+  "models": {
+    "qwen3-coder": {
+      "provider": "ollama",
+      "endpoint": "http://localhost:11434/v1/chat/completions"
+    },
+    "llama3.1:8b": {
+      "provider": "ollama",
+      "endpoint": "http://localhost:11434/v1/chat/completions"
+    },
+    "qwen2.5-coder:7b": {
+      "provider": "ollama",
+      "endpoint": "http://localhost:11434/v1/chat/completions"
+    }
+  },
+  "agents": {
+    "planner": {
+      "model": "llama3.1:8b"
+    },
+    "coder": {
+      "model": "qwen3-coder"
+    },
+    "fast_utility": {
+      "model": "qwen2.5-coder:7b"
+    }
+  }
+}
