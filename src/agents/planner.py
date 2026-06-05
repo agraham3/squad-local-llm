@@ -73,7 +73,7 @@ Think step-by-step, then output ONLY the JSON object."""
 
     response = llm.invoke(planning_prompt)
     
-    print("[✓] PLANNER - Task analysis complete")
+    print("[OK] PLANNER - Task analysis complete")
     
     # Save log
     _save_planner_log(state, response)

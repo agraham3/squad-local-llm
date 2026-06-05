@@ -29,11 +29,11 @@ def read_file(file_path: str) -> str:
         with open(file_path, "r", encoding="utf-8") as f:
             return f.read()
     except FileNotFoundError:
-        return f"❌ File not found: {file_path}"
+        return f"ERROR: File not found: {file_path}"
     except IsADirectoryError:
-        return f"❌ Path is a directory, not a file: {file_path}"
+        return f"ERROR: Path is a directory, not a file: {file_path}"
     except Exception as e:
-        return f"❌ Error reading file: {str(e)}"
+        return f"ERROR: Error reading file: {str(e)}"
 
 
 @tool
@@ -57,9 +57,9 @@ def write_file(file_path: str, content: str) -> str:
         
         # Count lines for feedback
         num_lines = len(content.splitlines())
-        return f"✓ Written {num_lines} lines to {file_path}"
+        return f"OK: Written {num_lines} lines to {file_path}"
     except Exception as e:
-        return f"❌ Error writing file: {str(e)}"
+        return f"ERROR: Error writing file: {str(e)}"
 
 
 @tool
@@ -77,9 +77,9 @@ def append_file(file_path: str, content: str) -> str:
     try:
         with open(file_path, "a", encoding="utf-8") as f:
             f.write(content)
-        return f"✓ Appended content to {file_path}"
+        return f"OK: Appended content to {file_path}"
     except Exception as e:
-        return f"❌ Error appending to file: {str(e)}"
+        return f"ERROR: Error appending to file: {str(e)}"
 
 
 @tool
@@ -96,7 +96,7 @@ def list_directory(directory_path: str = ".") -> str:
     try:
         path = Path(directory_path)
         if not path.is_dir():
-            return f"❌ Not a directory: {directory_path}"
+            return f"ERROR: Not a directory: {directory_path}"
         
         items = sorted(path.iterdir())
         if not items:
@@ -112,7 +112,7 @@ def list_directory(directory_path: str = ".") -> str:
         
         return "\n".join(output)
     except Exception as e:
-        return f"❌ Error listing directory: {str(e)}"
+        return f"ERROR: Error listing directory: {str(e)}"
 
 
 @tool
@@ -131,7 +131,7 @@ def search_codebase(pattern: str, directory: str = ".", file_extension: str = "*
     try:
         path = Path(directory)
         if not path.is_dir():
-            return f"❌ Not a directory: {directory}"
+            return f"ERROR: Not a directory: {directory}"
         
         matches = []
         pattern_lower = pattern.lower()
@@ -151,7 +151,7 @@ def search_codebase(pattern: str, directory: str = ".", file_extension: str = "*
         
         return "\n".join(matches[:50])  # Limit to first 50 matches
     except Exception as e:
-        return f"❌ Error searching: {str(e)}"
+        return f"ERROR: Error searching: {str(e)}"
 
 
 @tool
@@ -159,7 +159,7 @@ def run_python_code(code: str) -> str:
     """
     Execute Python code and return output.
     
-    ⚠️  Use with caution - executes arbitrary code!
+    Caution: executes arbitrary code.
     
     Args:
         code: Python code to execute
@@ -179,9 +179,9 @@ def run_python_code(code: str) -> str:
             output += f"\n[stderr]\n{result.stderr}"
         return output if output else "(no output)"
     except subprocess.TimeoutExpired:
-        return "❌ Code execution timed out (>10s)"
+        return "ERROR: Code execution timed out (>10s)"
     except Exception as e:
-        return f"❌ Error executing code: {str(e)}"
+        return f"ERROR: Error executing code: {str(e)}"
 
 
 @tool
@@ -197,9 +197,9 @@ def create_directory(directory_path: str) -> str:
     """
     try:
         Path(directory_path).mkdir(parents=True, exist_ok=True)
-        return f"✓ Directory created: {directory_path}"
+        return f"OK: Directory created: {directory_path}"
     except Exception as e:
-        return f"❌ Error creating directory: {str(e)}"
+        return f"ERROR: Error creating directory: {str(e)}"
 
 
 @tool
@@ -215,11 +215,11 @@ def delete_file(file_path: str) -> str:
     """
     try:
         Path(file_path).unlink()
-        return f"✓ File deleted: {file_path}"
+        return f"OK: File deleted: {file_path}"
     except FileNotFoundError:
-        return f"❌ File not found: {file_path}"
+        return f"ERROR: File not found: {file_path}"
     except Exception as e:
-        return f"❌ Error deleting file: {str(e)}"
+        return f"ERROR: Error deleting file: {str(e)}"
 
 
 # All tools available for binding to agents

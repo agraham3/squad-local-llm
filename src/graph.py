@@ -1,6 +1,6 @@
 """
 LangGraph state graph and routing logic.
-Defines the multi-agent workflow: Planning → Routing → Execution → Completion
+Defines the multi-agent workflow: Planning -> Routing -> Execution -> Completion
 """
 
 import json
@@ -25,6 +25,8 @@ class AgentState(TypedDict):
     status: str
     messages: list
     next_agent: str
+    files_written: list[str]
+    file_write_error: str
 
 
 def routing_decision_node(state: AgentState) -> dict:
@@ -170,6 +172,8 @@ def _save_execution_log(task: str, final_state: dict) -> str:
         "next_agent": final_state.get("next_agent", ""),
         "implementation": final_state.get("implementation", ""),
         "utility_output": final_state.get("utility_output", ""),
+        "files_written": final_state.get("files_written", []),
+        "file_write_error": final_state.get("file_write_error", ""),
     }
     
     # Save as JSON
@@ -232,6 +236,8 @@ def invoke_graph(user_task: str, verbose: bool = True, save_logs: bool = True) -
         "status": "initialized",
         "messages": [],
         "next_agent": "",
+        "files_written": [],
+        "file_write_error": "",
     }
     
     if verbose:
@@ -275,6 +281,8 @@ def stream_graph(user_task: str) -> None:
         "status": "initialized",
         "messages": [],
         "next_agent": "",
+        "files_written": [],
+        "file_write_error": "",
     }
     
     print(f"\n{'='*60}")
