@@ -405,6 +405,16 @@ The system routes tasks intelligently based on keywords:
 
 ## Usage
 
+### Initialize Local Squad Runtime
+
+```bash
+# Create .squad/config.json plus log/work directories
+python -m src.main init
+
+# Optional: point file writes at another project root
+python -m src.main init --project /path/to/project
+```
+
 ### Interactive Mode
 
 ```bash
@@ -842,6 +852,7 @@ cd squad-local-llm
 python -m venv venv
 source venv/bin/activate  # or venv\Scripts\activate on Windows
 pip install -r requirements.txt
+python -m src.main init
 
 # 3. Run examples
 python -m src.main example1

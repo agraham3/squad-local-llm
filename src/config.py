@@ -96,7 +96,7 @@ AGENTS: Dict[str, AgentConfig] = {
 }
 
 
-# Routing rules: task characteristics → agent selection
+# Routing rules: task characteristics -> agent selection
 ROUTING_RULES: Dict[str, Dict] = {
     "planning": {
         "agents": ["planner"],
@@ -145,11 +145,11 @@ def get_routing_agent(task: str) -> str:
 
 if __name__ == "__main__":
     # Validate configuration on import
-    print("✓ Configuration loaded successfully")
+    print("[OK] Configuration loaded successfully")
     print(f"\nAvailable models:")
     for model_name, model_config in MODELS.items():
         print(f"  - {model_name}: {model_config.role.value} ({model_config.description})")
     
     print(f"\nAvailable agents:")
     for agent_name, agent_config in AGENTS.items():
-        print(f"  - {agent_name}: {agent_config.role} → {agent_config.model.name}")
+        print(f"  - {agent_name}: {agent_config.role} -> {agent_config.model.name}")

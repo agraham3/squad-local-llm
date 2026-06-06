@@ -68,7 +68,7 @@ Output the solution directly and concisely."""
 
     response = llm.invoke(utility_prompt)
     
-    print("[✓] FAST_UTILITY - Boilerplate generated")
+    print("[OK] FAST_UTILITY - Boilerplate generated")
     
     # Save log
     _save_utility_log(state, response)

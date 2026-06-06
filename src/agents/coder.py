@@ -6,6 +6,7 @@ Role: Generate, refactor, debug code - has full tool access
 
 from langchain_ollama import OllamaLLM
 from src.config import get_agent_config
+from src.squad_runtime import extract_file_writes, write_agent_files
 
 
 def _save_coder_log(input_state: dict, output: str) -> None:
@@ -67,22 +68,42 @@ Your responsibilities:
 1. Generate or refactor code according to the plan
 2. Ensure code is clean, well-commented, and follows best practices
 3. Provide complete, working code that can be directly used
+4. When creating or updating project files, use this exact format for every file:
+
+FILE: relative/path/from/project/root.py
+```python
+exact file contents here
+```
 
 Output:
 - First, briefly explain your implementation strategy
-- Then provide the complete code
+- Then provide the complete code using FILE blocks for files that should be saved
 - Finally, explain any design decisions made
 
+Do not put file contents only in prose. If the task requires a file, include a FILE block.
 Focus on correctness and clarity over brevity."""
 
     response = llm.invoke(coding_prompt)
+    files_written = []
+    try:
+        file_writes = extract_file_writes(response)
+        if file_writes:
+            files_written = write_agent_files(file_writes)
+            print(f"[*] CODER - Wrote {len(files_written)} file(s) to project")
+    except Exception as exc:
+        state["status"] = "file_write_failed"
+        state["implementation"] = response
+        state["file_write_error"] = str(exc)
+        print(f"[!] CODER - File write failed: {exc}")
+        return state
     
-    print("[✓] CODER - Implementation complete")
+    print("[OK] CODER - Implementation complete")
     
     # Save log
     _save_coder_log(state, response)
     
     state["implementation"] = response
+    state["files_written"] = files_written
     state["status"] = "implementation_complete"
     
     return state
